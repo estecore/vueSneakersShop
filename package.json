@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@vue/language-service": "^1.8.27",
     "vue": "^3.4.15"
   },
   "devDependencies": {
