@@ -11,6 +11,8 @@ import Drawer from './components/Drawer.vue'
     imageUrl: string
     title: string
     price: number
+    isFavorite: boolean
+    parentId?: number
   }
 
   interface Param  {
@@ -19,6 +21,7 @@ import Drawer from './components/Drawer.vue'
   }
 
   const items: Ref<Array<Item>> = ref([])
+
   const filters= reactive({
     sortBy:'title',
     searchQuery:''
@@ -32,25 +35,53 @@ import Drawer from './components/Drawer.vue'
     filters.searchQuery = (event.target as HTMLInputElement).value
   }
 
-  const fetchItems: () => void = async () => {
+  const fetchFavorites: () => void = async () => {
     try {
-      const params:Param = {
-        sortBy: filters.sortBy,
-      }
-      if (filters.searchQuery) {
-        params.title = `*${filters.searchQuery}*`
-      }
-  const {data} = await axios.get(`https://a0fab315ccc8463d.mokky.dev/items`,{
+      const {data: favorites} = await axios.get<Array<Item>>(`https://a0fab315ccc8463d.mokky.dev/favorites`)
+      items.value = items.value.map(item => {
+        const favorite = favorites.find((favorite: Item) => favorite.parentId === item.id)
+        if (!favorite) {
+          return item
+        }
+
+        return {...item, isFavorite: true, favoriteId: favorite.id}
+      })
+    } catch (error) {
+      console.log(error)
+      alert('Произошла ошибка при получении избранных кроссовок(')
+    }
+  }
+
+  const addToFavorite = async (item: { isFavorite: boolean }) => {
+    item.isFavorite = true
+  }
+
+  const fetchItems: () => void = async () => {
+  try {
+    const params:Param = {
+      sortBy: filters.sortBy,
+    }
+    if (filters.searchQuery) {
+      params.title = `*${filters.searchQuery}*`
+    }
+  const {data} = await axios.get<Array<Item>>(`https://a0fab315ccc8463d.mokky.dev/items`,{
     params
   })
-  items.value = data
+  items.value = data.map(obj => ({
+    ...obj,
+    isFavorite: false,
+    isAdded: false
+  }))
  } catch (error) {
   console.log(error)
   alert('Произошла ошибка при получении кроссовок(')
  }
   }
 
-onMounted(fetchItems)
+onMounted(async () => {
+  await fetchItems()
+  await fetchFavorites()
+})
 
 watch(filters, fetchItems)
 </script>

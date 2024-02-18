@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { defineProps } from 'vue'
+
 import Card from './Card.vue'
 
 interface Item {
@@ -6,6 +8,7 @@ interface Item {
   imageUrl: string
   title: string
   price: number
+  isFavorite: boolean
 }
 
 defineProps({
@@ -26,7 +29,7 @@ const onClickAdd: () => void = () => {
       :title="item.title"
       :price="item.price"
       :isAdded="false"
-      :isFavorite="false"
+      :isFavorite="item.isFavorite"
       :onClickAdd="onClickAdd"
     />
   </div>
