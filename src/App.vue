@@ -1,5 +1,3 @@
-<script setup lang="ts"></script>
-
-<template></template>
-
-<style scoped></style>
+<template>
+  <h1>Estecore</h1>
+</template>
