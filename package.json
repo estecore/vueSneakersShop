@@ -16,6 +16,7 @@
     "@formkit/auto-animate": "^0.8.1",
     "@vue/language-service": "^1.8.27",
     "axios": "^1.6.7",
+    "lodash.debounce": "^4.0.8",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5"
   },

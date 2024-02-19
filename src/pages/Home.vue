@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
+import debounce from 'lodash.debounce'
 import { inject, onMounted, reactive, type Ref, ref, watch } from 'vue'
 
 import {type Item} from '../App.vue'
@@ -32,9 +33,8 @@ const onClickAddPlus = (item: Item) => {
 const onChangeSelect: (event: Event) => void = (event) => {
   filters.sortBy = (event.target as HTMLInputElement).value
 }
-const onChangeSearchInput: (event: Event) => void = (event) => {
-  filters.searchQuery = (event.target as HTMLInputElement).value
-}
+const onChangeSearchInput =  debounce((event) => {
+  filters.searchQuery = (event.target as HTMLInputElement).value}, 200)
 
 const addToFavorite = async (item: Item) => {
   try {
