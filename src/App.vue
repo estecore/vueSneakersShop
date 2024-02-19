@@ -1,18 +1,31 @@
+
+
+
+
+<!-- =================== TODO: replace type any and ts-ignore -->
+
+
+
+
 <script setup lang="ts">
-import { onMounted, type Ref, ref, watch, reactive, provide } from 'vue'
+import { onMounted, type Ref, ref, watch, reactive, provide, computed } from 'vue'
 import axios from 'axios'
 
+// @ts-ignore  because compositions api swears at the lack of export default
 import Header from './components/Header.vue'
+// @ts-ignore  because compositions api swears at the lack of export default
 import CardList from './components/CardList.vue'
+// @ts-ignore  because compositions api swears at the lack of export default
 import Drawer from './components/Drawer.vue'
 import { isTemplateMiddle } from 'typescript'
 
-  interface Item {
+  export interface Item {
     id: number
     imageUrl: string
     title: string
     price: number
     isFavorite: boolean
+    isAdded: boolean
     parentId?: number
     favoriteId?: number | null
   }
@@ -23,12 +36,63 @@ import { isTemplateMiddle } from 'typescript'
   }
 
   const items: Ref<Array<Item>> = ref([])
+  const cart: Ref<Array<Item>> = ref([])
+  const isCreatingOrder = ref(false)
+
+  const drawerOpen: Ref<boolean> = ref(false) 
+
+  const totalPrice = computed(() => cart.value.reduce((acc: number, item: Item) => {
+    return acc + item.price
+  }, 0))
+
+  const toggleDrawer: () => void = () => {
+    drawerOpen.value = !drawerOpen.value
+  }
+
+  const cartIsEmpty = computed(() => cart.value.length === 0)
+
+  const cartButtonDesabled = computed(() => isCreatingOrder.value || cartIsEmpty.value)
 
   const filters= reactive({
     sortBy:'title',
     searchQuery:''
   })
 
+  const addToCart = (item: Item) => {
+      cart.value.push(item)
+      item.isAdded = true
+    }
+
+    const removeFromCart = (item: Item) => {
+      cart.value.splice(cart.value.indexOf(item), 1)
+      item.isAdded = false
+    }
+
+    const createOrder = async () => {
+      try {
+        isCreatingOrder.value = true
+        const {data} = await axios.post<Array<Item>>('https://a0fab315ccc8463d.mokky.dev/order', {
+          items: cart.value,
+        totalPrice: totalPrice.value
+        })
+        cart.value = []
+
+        return data
+      } catch (error) {
+        console.log(error)
+        alert('Произошла ошибка при создании заказа(')
+      } finally {
+        isCreatingOrder.value = false
+      }
+    }
+
+  const onClickAddPlus = (item: Item) => {
+    if (!item.isAdded) {
+      addToCart(item)
+    } else {
+      removeFromCart(item)
+    }
+  }
 
   const onChangeSelect: (event: Event) => void = event => {
     filters.sortBy = (event.target as HTMLInputElement).value
@@ -104,13 +168,20 @@ onMounted(async () => {
 
 watch(filters, fetchItems)
 
-provide('addToFavorite', addToFavorite)
+watch(cart, ()=> {
+  items.value = items.value.map((item) => ({
+    ...item,
+    isAdded: false
+  }))
+})
+
+provide('cart', {cart,toggleDrawer,addToCart,removeFromCart})
 </script>
 
 <template>
-  <!-- <Drawer /> -->
+  <Drawer v-if="drawerOpen" :totalPrice="totalPrice" @createOrder="createOrder" :cartButtonDesabled="cartButtonDesabled" />
   <div class="bg-white w-4/5 m-auto rounded-xl shadow-xl mt-14">
-    <Header />
+    <Header :totalPrice="totalPrice" @toggleDrawer="toggleDrawer" />
 
     <div class="p-10">
       <div class="flex justify-between items-center">
@@ -134,7 +205,7 @@ provide('addToFavorite', addToFavorite)
         </div>
       </div>
       <div class="mt-10">
-        <CardList :items="items" @addToFavorite="addToFavorite"/>
+        <CardList :items="items" @addToFavorite="addToFavorite" @addToCart="onClickAddPlus"/>
       </div>
     </div>
   </div>
