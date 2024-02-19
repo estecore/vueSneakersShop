@@ -1,25 +1,14 @@
 <script setup lang="ts">
 import { defineProps } from 'vue'
-
+// @ts-ignore  because compositions api swears at the lack of export default
 import Card from './Card.vue'
-
-interface Item {
-  id: number
-  imageUrl: string
-  title: string
-  price: number
-  isFavorite: boolean
-}
+import { type Item } from '../App.vue'
 
 defineProps({
   items: { type: Array<Item>, required: true, default: () => [] }
 })
 
-const emit = defineEmits(['addToFavorite'])
-
-const onClickAdd: () => void = () => {
-  alert('Добавить!')
-}
+const emit = defineEmits(['addToFavorite', 'addToCart'])
 </script>
 
 <template>
@@ -31,10 +20,10 @@ const onClickAdd: () => void = () => {
       :imageUrl="item.imageUrl"
       :title="item.title"
       :price="item.price"
-      :isAdded="false"
       :isFavorite="item.isFavorite"
-      :onClickAdd="onClickAdd"
+      :isAdded="item.isAdded"
       :onClickFavorite="() => emit('addToFavorite', item)"
+      :onClickAdd="() => emit('addToCart', item)"
     />
   </div>
 </template>
