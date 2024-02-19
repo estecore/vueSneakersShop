@@ -1,5 +1,6 @@
 <script setup lang="ts">
 defineProps({
+  id: Number,
   imageUrl: String,
   title: String,
   price: Number,

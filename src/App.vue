@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, type Ref, ref, watch, reactive } from 'vue'
+import { onMounted, type Ref, ref, watch, reactive, provide } from 'vue'
 import axios from 'axios'
 
 import Header from './components/Header.vue'
 import CardList from './components/CardList.vue'
 import Drawer from './components/Drawer.vue'
+import { isTemplateMiddle } from 'typescript'
 
   interface Item {
     id: number
@@ -13,6 +14,7 @@ import Drawer from './components/Drawer.vue'
     price: number
     isFavorite: boolean
     parentId?: number
+    favoriteId?: number | null
   }
 
   interface Param  {
@@ -52,8 +54,24 @@ import Drawer from './components/Drawer.vue'
     }
   }
 
-  const addToFavorite = async (item: { isFavorite: boolean }) => {
-    item.isFavorite = true
+  const addToFavorite = async (item: Item) => {
+    try {
+      if (!item.isFavorite) {
+        const obj = {
+        parentId: item.id
+      } 
+      item.isFavorite = true
+      const {data} = await axios.post<{parentId: number, id: number}>(`https://a0fab315ccc8463d.mokky.dev/favorites`, obj)
+      item.favoriteId = data.id
+      } else {
+        item.isFavorite = false
+        await axios.delete(`https://a0fab315ccc8463d.mokky.dev/favorites/${item.favoriteId}`)
+        item.favoriteId = null
+      }
+    } catch (error) {
+      console.log(error)
+      alert('Произошла ошибка при добавлении в избранное(')
+    }
   }
 
   const fetchItems: () => void = async () => {
@@ -70,6 +88,7 @@ import Drawer from './components/Drawer.vue'
   items.value = data.map(obj => ({
     ...obj,
     isFavorite: false,
+    favoriteId: null,
     isAdded: false
   }))
  } catch (error) {
@@ -84,6 +103,8 @@ onMounted(async () => {
 })
 
 watch(filters, fetchItems)
+
+provide('addToFavorite', addToFavorite)
 </script>
 
 <template>
@@ -113,7 +134,7 @@ watch(filters, fetchItems)
         </div>
       </div>
       <div class="mt-10">
-        <CardList :items="items" />
+        <CardList :items="items" @addToFavorite="addToFavorite"/>
       </div>
     </div>
   </div>
