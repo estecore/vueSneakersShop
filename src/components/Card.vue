@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps({
+const props = defineProps({
   id: Number,
   imageUrl: String,
   title: String,
@@ -16,6 +16,7 @@ defineProps({
     class="relative bg-white border border-slate-100 rounded-3xl p-8 cursor-pointer transition hover:-translate-y-2 hover:shadow-xl"
   >
     <img
+      v-if="onClickFavorite"
       @click="onClickFavorite ? onClickFavorite() : () => {}"
       class="absolute top-8 left-8"
       :src="isFavorite ? '/like-2.svg' : '/like-1.svg'"
@@ -32,6 +33,7 @@ defineProps({
       </div>
 
       <img
+        v-if="onClickAdd"
         @click="onClickAdd ? onClickAdd() : () => {}"
         :src="isAdded ? '/checked.svg' : '/plus.svg'"
         alt="plus"

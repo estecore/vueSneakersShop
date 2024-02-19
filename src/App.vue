@@ -22,8 +22,8 @@ export interface Item {
   price: number
   isFavorite: boolean
   isAdded: boolean
-  parentId?: number
-  favoriteId?: number | null
+  favoriteId: number | null
+  item_id: number
 }
 
 // ============ Cart
