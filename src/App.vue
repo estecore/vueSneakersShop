@@ -1,11 +1,15 @@
-<!-- =================== TODO: replace type any and ts-ignore -->
+<!-- 
+
+
+ =================== TODO: replace type any and ts-ignore 
+
+
+ -->
 
 <script setup lang="ts">
 import { type Ref, ref, watch, provide, computed } from 'vue'
 import axios from 'axios'
 
-// @ts-ignore  because compositions api swears at the lack of export default
-import Home from './pages/Home.vue'
 // @ts-ignore  because compositions api swears at the lack of export default
 import Header from './components/Header.vue'
 // @ts-ignore  because compositions api swears at the lack of export default
@@ -95,7 +99,7 @@ provide('cart', { cart, toggleDrawer, addToCart, removeFromCart })
     <Header :totalPrice="totalPrice" @toggleDrawer="toggleDrawer" />
 
     <div class="p-10">
-      <Home />
+      <router-view></router-view>
     </div>
   </div>
 </template>
