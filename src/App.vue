@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { onMounted, type Ref, ref, watch, reactive } from 'vue'
+import { onMounted, type Ref, ref, watch, reactive, provide } from 'vue'
 import axios from 'axios'
 
 import Header from './components/Header.vue'
 import CardList from './components/CardList.vue'
 import Drawer from './components/Drawer.vue'
+import { isTemplateMiddle } from 'typescript'
 
   interface Item {
     id: number
     imageUrl: string
     title: string
     price: number
+    isFavorite: boolean
+    parentId?: number
+    favoriteId?: number | null
   }
 
   interface Param  {
@@ -19,6 +23,7 @@ import Drawer from './components/Drawer.vue'
   }
 
   const items: Ref<Array<Item>> = ref([])
+
   const filters= reactive({
     sortBy:'title',
     searchQuery:''
@@ -32,27 +37,74 @@ import Drawer from './components/Drawer.vue'
     filters.searchQuery = (event.target as HTMLInputElement).value
   }
 
-  const fetchItems: () => void = async () => {
+  const fetchFavorites: () => void = async () => {
     try {
-      const params:Param = {
-        sortBy: filters.sortBy,
+      const {data: favorites} = await axios.get<Array<Item>>(`https://a0fab315ccc8463d.mokky.dev/favorites`)
+      items.value = items.value.map(item => {
+        const favorite = favorites.find((favorite: Item) => favorite.parentId === item.id)
+        if (!favorite) {
+          return item
+        }
+
+        return {...item, isFavorite: true, favoriteId: favorite.id}
+      })
+    } catch (error) {
+      console.log(error)
+      alert('Произошла ошибка при получении избранных кроссовок(')
+    }
+  }
+
+  const addToFavorite = async (item: Item) => {
+    try {
+      if (!item.isFavorite) {
+        const obj = {
+        parentId: item.id
+      } 
+      item.isFavorite = true
+      const {data} = await axios.post<{parentId: number, id: number}>(`https://a0fab315ccc8463d.mokky.dev/favorites`, obj)
+      item.favoriteId = data.id
+      } else {
+        item.isFavorite = false
+        await axios.delete(`https://a0fab315ccc8463d.mokky.dev/favorites/${item.favoriteId}`)
+        item.favoriteId = null
       }
-      if (filters.searchQuery) {
-        params.title = `*${filters.searchQuery}*`
-      }
-  const {data} = await axios.get(`https://a0fab315ccc8463d.mokky.dev/items`,{
+    } catch (error) {
+      console.log(error)
+      alert('Произошла ошибка при добавлении в избранное(')
+    }
+  }
+
+  const fetchItems: () => void = async () => {
+  try {
+    const params:Param = {
+      sortBy: filters.sortBy,
+    }
+    if (filters.searchQuery) {
+      params.title = `*${filters.searchQuery}*`
+    }
+  const {data} = await axios.get<Array<Item>>(`https://a0fab315ccc8463d.mokky.dev/items`,{
     params
   })
-  items.value = data
+  items.value = data.map(obj => ({
+    ...obj,
+    isFavorite: false,
+    favoriteId: null,
+    isAdded: false
+  }))
  } catch (error) {
   console.log(error)
   alert('Произошла ошибка при получении кроссовок(')
  }
   }
 
-onMounted(fetchItems)
+onMounted(async () => {
+  await fetchItems()
+  await fetchFavorites()
+})
 
 watch(filters, fetchItems)
+
+provide('addToFavorite', addToFavorite)
 </script>
 
 <template>
@@ -82,7 +134,7 @@ watch(filters, fetchItems)
         </div>
       </div>
       <div class="mt-10">
-        <CardList :items="items" />
+        <CardList :items="items" @addToFavorite="addToFavorite"/>
       </div>
     </div>
   </div>

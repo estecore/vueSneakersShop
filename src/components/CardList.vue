@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { defineProps } from 'vue'
+
 import Card from './Card.vue'
 
 interface Item {
@@ -6,11 +8,14 @@ interface Item {
   imageUrl: string
   title: string
   price: number
+  isFavorite: boolean
 }
 
 defineProps({
   items: { type: Array<Item>, required: true, default: () => [] }
 })
+
+const emit = defineEmits(['addToFavorite'])
 
 const onClickAdd: () => void = () => {
   alert('Добавить!')
@@ -22,12 +27,14 @@ const onClickAdd: () => void = () => {
     <Card
       v-for="item in items"
       :key="item.id"
+      :id="item.id"
       :imageUrl="item.imageUrl"
       :title="item.title"
       :price="item.price"
       :isAdded="false"
-      :isFavorite="false"
+      :isFavorite="item.isFavorite"
       :onClickAdd="onClickAdd"
+      :onClickFavorite="() => emit('addToFavorite', item)"
     />
   </div>
 </template>
