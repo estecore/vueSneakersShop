@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import axios from 'axios'
+import { computed, inject, ref } from 'vue'
 
+import { type Item } from '../App.vue'
 // @ts-ignore  because compositions api swears at the lack of export default
 import DrawerHead from './DrawerHead.vue'
 // @ts-ignore  because compositions api swears at the lack of export default
@@ -9,14 +11,38 @@ import CartItemList from './CartItemList.vue'
 import InfoBlockVue from './InfoBlock.vue'
 
 const props = defineProps({
-  totalPrice: Number,
-  cartButtonDesabled: Boolean
+  totalPrice: Number
 })
+
 const vatPrice = computed(() => props.totalPrice && Math.ceil(props.totalPrice * 0.05))
 
-const { toggleDrawer }: any = inject('cart')
+const isCreatingOrder = ref(false)
+const orderId = ref(null)
 
-const emit = defineEmits(['createOrder'])
+const { cart, toggleDrawer }: any = inject('cart')
+
+const createOrder = async () => {
+  try {
+    isCreatingOrder.value = true
+    const { data } = await axios.post<Array<Item>>('https://a0fab315ccc8463d.mokky.dev/order', {
+      items: cart.value,
+      totalPrice: props.totalPrice && props.totalPrice
+    })
+    cart.value = []
+
+    orderId.value = data.id
+    return data
+  } catch (error) {
+    console.log(error)
+    alert('Произошла ошибка при создании заказа(')
+  } finally {
+    isCreatingOrder.value = false
+  }
+}
+
+const cartIsEmpty = computed(() => cart.value.length === 0)
+
+const ButtonDesabled = computed(() => isCreatingOrder.value || cartIsEmpty.value)
 </script>
 
 <template>
@@ -27,13 +53,22 @@ const emit = defineEmits(['createOrder'])
   <div class="bg-white w-96 h-full fixed right-0 top-0 z-20 p-8">
     <DrawerHead />
 
-    <div v-if="!totalPrice" class="flex h-full items-center">
+    <div v-if="!totalPrice || orderId" class="flex h-full items-center">
       <InfoBlockVue
+        v-if="!totalPrice && !orderId"
         imageUrl="/package-icon.png"
         title="Корзина пуста"
         description="Добавьте хотя бы одну кроссовку, чтобы сделать заказ"
       />
+
+      <InfoBlockVue
+        v-if="orderId"
+        imageUrl="/order-success-icon.png"
+        title="Заказ оформлен"
+        :description="`Ваш заказ №${orderId} скоро будет передан курьерской доставке`"
+      />
     </div>
+
     <div v-else>
       <CartItemList />
 
@@ -50,8 +85,8 @@ const emit = defineEmits(['createOrder'])
         </div>
 
         <button
-          @click="emit('createOrder')"
-          :disabled="cartButtonDesabled"
+          @click="createOrder"
+          :disabled="ButtonDesabled"
           class="mt-4 bg-lime-500 w-full rounded-xl py-3 text-white cursor-pointer transition disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-lime-600 active:bg-lime-700"
         >
           Оформить заказ

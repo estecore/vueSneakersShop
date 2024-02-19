@@ -28,7 +28,6 @@ export interface Item {
 
 // ============ Cart
 const cart: Ref<Array<Item>> = ref([])
-const isCreatingOrder = ref(false)
 
 const drawerOpen: Ref<boolean> = ref(false)
 
@@ -42,10 +41,6 @@ const toggleDrawer: () => void = () => {
   drawerOpen.value = !drawerOpen.value
 }
 
-const cartIsEmpty = computed(() => cart.value.length === 0)
-
-const cartButtonDesabled = computed(() => isCreatingOrder.value || cartIsEmpty.value)
-
 const addToCart = (item: Item) => {
   cart.value.push(item)
   item.isAdded = true
@@ -54,24 +49,6 @@ const addToCart = (item: Item) => {
 const removeFromCart = (item: Item) => {
   cart.value.splice(cart.value.indexOf(item), 1)
   item.isAdded = false
-}
-
-const createOrder = async () => {
-  try {
-    isCreatingOrder.value = true
-    const { data } = await axios.post<Array<Item>>('https://a0fab315ccc8463d.mokky.dev/order', {
-      items: cart.value,
-      totalPrice: totalPrice.value
-    })
-    cart.value = []
-
-    return data
-  } catch (error) {
-    console.log(error)
-    alert('Произошла ошибка при создании заказа(')
-  } finally {
-    isCreatingOrder.value = false
-  }
 }
 
 watch(
@@ -89,12 +66,7 @@ provide('cart', { cart, toggleDrawer, addToCart, removeFromCart })
 </script>
 
 <template>
-  <Drawer
-    v-if="drawerOpen"
-    :totalPrice="totalPrice"
-    @createOrder="createOrder"
-    :cartButtonDesabled="cartButtonDesabled"
-  />
+  <Drawer v-if="drawerOpen" :totalPrice="totalPrice" />
   <div class="bg-white w-4/5 m-auto rounded-xl shadow-xl mt-14">
     <Header :totalPrice="totalPrice" @toggleDrawer="toggleDrawer" />
 
