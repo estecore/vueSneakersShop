@@ -31,10 +31,12 @@ const emit = defineEmits(['toggleDrawer'])
           <span>Закладки</span>
         </li>
       </router-link>
-      <li class="flex items-center gap-3 hover:text-black cursor-pointer">
-        <img src="/profile.svg" alt="profile" />
-        <span>Профиль</span>
-      </li>
+      <router-link to="/profile">
+        <li class="flex items-center gap-3 hover:text-black cursor-pointer">
+          <img src="/profile.svg" alt="profile" />
+          <span>Профиль</span>
+        </li>
+      </router-link>
     </ul>
   </header>
 </template>

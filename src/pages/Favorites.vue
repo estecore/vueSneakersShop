@@ -13,7 +13,6 @@ onMounted(async () => {
     const { data } = await axios.get(
       `https://a0fab315ccc8463d.mokky.dev/favorites?_relations=items`
     )
-    console.log(data)
     favorites.value = data.map((obj: any) => obj.item)
   } catch (error) {
     console.log(error)
